@@ -1,6 +1,23 @@
-var builder = WebApplication.CreateBuilder(args);
+using Microsoft.EntityFrameworkCore;
+using Task7.Models;
+using Task7.Hubs;
+using Microsoft.AspNetCore.Identity;
+using Task7.Services;
+using Task7.Models;
+using Task7.Services;
 
-// Add services to the container.
+var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
+string connection = builder.Configuration.GetConnectionString("ContextConnection");
+
+builder.Services.AddDbContext<ApplicationContext>(options => options.UseSqlServer(connection));
+
+builder.Services.AddTransient<IUserService, UserService>();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession();  
+builder.Services.AddSignalR();
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
@@ -15,11 +32,13 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseSession();
 
 app.UseRouting();
 
 app.UseAuthorization();
 
+app.MapHub<GameHub>("/chat");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
